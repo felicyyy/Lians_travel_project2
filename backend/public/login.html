@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Lians Travel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #d9eef5 0%, #c1e2f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 48px;
+            max-width: 420px;
+            width: 100%;
+        }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo h1 { font-size: 2rem; font-weight: 800; color: #0b3b5f; }
+        .logo span { color: #2c7da0; }
+        .logo p { color: #5a6e7a; font-size: 0.9rem; margin-top: 4px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e0eef4;
+            border-radius: 16px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44, 125, 160, 0.1);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: #1f6e8c;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-login:hover { background: #0b5e7e; transform: translateY(-2px); }
+        .divider {
+            text-align: center;
+            margin: 24px 0;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            position: relative;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e0eef4;
+        }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .register-link {
+            text-align: center;
+            margin-top: 16px;
+            color: #5a6e7a;
+            font-size: 0.9rem;
+        }
+        .register-link a { color: #1f6e8c; font-weight: 600; text-decoration: none; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .alert-error { background: #fee2e2; color: #b91c1c; }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert.show { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo">
+            <h1>LIANS <span>TRAVEL</span></h1>
+            <p>Manado · Rental Transportasi</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="username" placeholder="Masukkan username" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" placeholder="Masukkan password" required>
+            </div>
+            <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt"></i> Login</button>
+        </form>
+
+        <div class="divider">atau</div>
+        <div class="register-link">Belum punya akun? <a href="/register">Daftar di sini</a></div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type} show`;
+            setTimeout(() => { alertBox.className = 'alert'; }, 5000);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) return showAlert('Harap isi username dan password', 'error');
+
+            try {
+                const response = await fetch(`${API_URL}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('user', JSON.stringify(result.data.user));
+                    showAlert('Login berhasil! Mengalihkan...', 'success');
+                    setTimeout(() => {
+                        if (result.data.user.role === 'admin') {
+                            window.location.href = '/admin';
+                        } else {
+                            window.location.href = '/';
+                        }
+                    }, 1000);
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Terjadi kesalahan. Coba lagi.', 'error');
+            }
+        });
+
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (token && user.role) {
+            if (user.role === 'admin') window.location.href = '/admin';
+            else window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

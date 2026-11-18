@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lians Travel Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+    <div class="admin-wrapper">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-chart-line"></i> Lians Admin</h2>
+                <p>Manado · Rental Transportasi</p>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-item active" id="menuStats"><i class="fas fa-chart-simple"></i> Statistik & Laporan</div>
+                <div class="menu-item" id="menuBookings"><i class="fas fa-calendar-check"></i> Semua Pemesanan</div>
+                <div class="menu-item" id="menuRentuner"><i class="fas fa-handshake"></i> Rentuner</div>
+                <div class="menu-item" id="menuLogout" style="margin-top: 20px; color: #f87171;"><i class="fas fa-sign-out-alt"></i> Logout</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div id="statsPage">
+                <div class="top-bar">
+                    <div class="page-title">
+                        <h1>Statistik & Laporan</h1>
+                        <p>Ringkasan pemesanan rental kendaraan</p>
+                    </div>
+                </div>
+
+                <div class="filter-export-bar">
+                    <div class="filter-export-group">
+                        <label>Filter Tanggal:</label>
+                        <input type="date" id="filterStartDate">
+                        <span>s/d</span>
+                        <input type="date" id="filterEndDate">
+                        <button class="btn-filter" id="applyFilterBtn"><i class="fas fa-filter"></i> Terapkan</button>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-export" id="exportFilteredBtn"><i class="fas fa-download"></i> Export (Filter)</button>
+                        <button class="btn-export" id="exportAllBtn" style="background: #0b5e7e;"><i class="fas fa-download"></i> Export Semua</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="statsCards">
+                    <div class="stat-card"><h3>Total Booking</h3><div class="stat-number" id="totalBookingStat">0</div></div>
+                    <div class="stat-card"><h3>Pending</h3><div class="stat-number" id="pendingStat">0</div></div>
+                    <div class="stat-card"><h3>Confirmed</h3><div class="stat-number" id="confirmedStat">0</div></div>
+                    <div class="stat-card"><h3>Completed</h3><div class="stat-number" id="completedStat">0</div></div>
+                    <div class="stat-card"><h3>Estimasi Pendapatan</h3><div class="stat-number" id="revenueStat">Rp 0</div></div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card"><h3><i class="fas fa-chart-bar"></i> Booking per Bulan</h3><div class="chart-container"><canvas id="monthlyChart"></canvas></div></div>
+                    <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Status Booking</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+                </div>
+
+                <div class="vehicle-stats">
+                    <h3><i class="fas fa-car"></i> Kendaraan Paling Banyak Disewa</h3>
+                    <div class="vehicle-list" id="vehicleStatsList"></div>
+                </div>
+
+                <div class="vehicle-stats" style="margin-top: 20px; border-top: 2px solid #e0eef4; padding-top: 20px;">
+                    <h3><i class="fas fa-calendar-check"></i> Cek Ketersediaan Kendaraan</h3>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; align-items: center;">
+                        <label style="font-weight: 600;">Pilih Tanggal:</label>
+                        <input type="date" id="checkAvailabilityDate" style="padding: 10px 16px; border-radius: 40px; border: 1.5px solid #e0eef4; font-family: inherit;">
+                        <button class="btn-filter" id="checkAvailabilityBtn" style="background: #1f6e8c; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-search"></i> Cek Ketersediaan
+                        </button>
+                    </div>
+                    <div id="availabilityResult" style="margin-top: 12px; padding: 16px; background: #f8fafc; border-radius: 16px;">
+                        <p style="color: #6c757d;">Pilih tanggal untuk melihat kendaraan yang tersedia</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEMUA PEMESANAN -->
+            <div id="bookingsPage" style="display: none;">
+                <div class="top-bar">
+                    <div class="page-title"><h1>Semua Pemesanan</h1><p>Kelola pesanan sewa mobil & bus pelanggan</p></div>
+                    <div class="admin-stats">
+                        <div class="stat-card"><div class="stat-number" id="totalBookings">0</div><div>Total</div></div>
+                        <div class="stat-card"><div class="stat-number" id="pendingCount">0</div><div>Pending</div></div>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Filter Status:</label>
+                        <select id="statusFilter">
+                            <option value="all">Semua</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <input type="text" id="searchInput" placeholder="Cari nama / kendaraan">
+                    </div>
+                    <button class="btn-refresh" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+
+                <div class="bookings-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama</th>
+                                <th>Kontak</th>
+                                <th>Kendaraan</th>
+                                <th>Rute</th>
+                                <th>Penjemputan</th>
+                                <th>Tujuan</th>
+                                <th>Periode Sewa</th>
+                                <th>Durasi</th>
+                                <th>Estimasi Total</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"><tr><td colspan="12" class="no-data">Belum ada data</td></tr></tbody>
+                    </table>
+                    <div id="paginationControls" class="pagination-container"></div>
+                </div>
+            </div>
+
+            <div id="rentunerPage" style="display: none;">
+                <div class="top-bar">
+                    <div class="page-title">
+                        <h1>Rentuner (Rent to Neer)</h1>
+                        <p>Order untuk rekan perusahaan</p>
+                    </div>
+                    <div class="admin-stats">
+                        <div class="stat-card"><div class="stat-number" id="totalRentuner">0</div><div>Total Rentuner</div></div>
+                    </div>
+                </div>
+
+                <div style="background: #f0f9ff; border-radius: 16px; padding: 16px 24px; margin-bottom: 20px; border-left: 4px solid #1f6e8c;">
+                    <p style="color: #1f6e8c; font-weight: 600;">
+                        <i class="fas fa-info-circle"></i> 
+                    </p>
+                </div>
+
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <input type="text" id="searchRentuner" placeholder="Cari nama / perusahaan rekan">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-filter" id="btnAddRentuner" style="background: #10b981; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-plus"></i> Buat Order Rentuner
+                        </button>
+                        <button class="btn-refresh" id="refreshRentunerBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+                </div>
+
+                <div class="bookings-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Perusahaan Rekan</th>
+                                <th>Kendaraan</th>
+                                <th>Periode Sewa</th>
+                                <th>Harga Standar</th>
+                                <th>Harga Manual</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rentunerTableBody">
+                            <tr><td colspan="8" class="no-data">Belum ada data rentuner</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="detailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 24px; padding: 32px; max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #0b3b5f; font-size: 1.5rem;"><i class="fas fa-edit"></i> Detail Pemesanan</h2>
+                <button onclick="closeDetailModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">&times;</button>
+            </div>
+
+            <form id="detailForm">
+                <input type="hidden" id="detailBookingId">
+                <div style="margin-bottom: 16px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">Booking ID</label>
+                    <input type="text" id="detailBookingCode" disabled style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px; background: #f8fafc;">
+                </div>
+
+                <!-- DATA UNIT & DRIVER -->
+                <div style="border-top: 2px solid #e0eef4; padding-top: 16px; margin-bottom: 16px;">
+                    <h3 style="color: #1f6e8c; font-size: 1rem; margin-bottom: 12px;"><i class="fas fa-car"></i> Data Unit & Driver</h3>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">Nomor Unit (Plat)</label>
+                        <input type="text" id="detailUnitNumber" placeholder="Contoh: DB 1234 AB" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">Nama Driver</label>
+                        <input type="text" id="detailDriverName" placeholder="Nama driver" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">No. HP Driver</label>
+                        <input type="text" id="detailDriverPhone" placeholder="0812xxxxxx" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                    </div>
+                </div>
+
+                <!-- RENTUNER -->
+                <div style="border-top: 2px solid #e0eef4; padding-top: 16px; margin-bottom: 16px;">
+                    <h3 style="color: #1f6e8c; font-size: 1rem; margin-bottom: 12px;"><i class="fas fa-handshake"></i> Fitur Rentuner</h3>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 12px;">
+                        <input type="checkbox" id="detailIsRentuner" style="width: 20px; height: 20px; cursor: pointer;">
+                        <span style="font-weight: 600;">Order untuk Rekan Perusahaan (Rentuner)</span>
+                    </label>
+                    <div id="rentunerFields" style="display: none; padding: 12px; background: #f0f9ff; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 6px;">Nama Perusahaan Rekan</label>
+                            <input type="text" id="detailPartnerCompany" placeholder="Contoh: PT. ABC Sejahtera" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; display: block; margin-bottom: 6px;">Harga Manual (Rp)</label>
+                            <input type="text" id="detailManualPrice" placeholder="Contoh: 17.500.000" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;" oninput="formatRupiahInput(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DP -->
+                <div style="border-top: 2px solid #e0eef4; padding-top: 16px; margin-bottom: 16px;">
+                    <h3 style="color: #1f6e8c; font-size: 1rem; margin-bottom: 12px;"><i class="fas fa-money-bill-wave"></i> Down Payment (DP)</h3>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">Jumlah DP (Rp)</label>
+                        <input type="text" id="detailDpAmount" placeholder="Contoh: 500.000" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;" oninput="formatRupiahInput(this)">
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">Tanggal DP</label>
+                        <input type="date" id="detailDpDate" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                    </div>
+                    <div style="padding: 12px; background: #fef3c7; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                        <p style="font-weight: 600; color: #92400e; font-size: 0.85rem; margin-bottom: 8px;">
+                            <i class="fas fa-plus-circle"></i> Penambahan Unit
+                        </p>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-weight: 600; display: block; margin-bottom: 6px;">Jumlah Unit Tambahan</label>
+                            <input type="number" id="detailAdditionalUnits" placeholder="Contoh: 2" min="0" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; display: block; margin-bottom: 6px;">Tanggal Unit Ditambahkan</label>
+                            <input type="date" id="detailAdditionalUnitDate" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">Catatan Admin (Internal)</label>
+                    <textarea id="detailAdminNotes" rows="3" placeholder="Catatan internal untuk admin" style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px; font-family: inherit;"></textarea>
+                </div>
+
+                <button type="submit" style="width: 100%; padding: 14px; background: #1f6e8c; color: white; border: none; border-radius: 40px; font-weight: 700; font-size: 1rem; cursor: pointer;">
+                    <i class="fas fa-save"></i> Simpan Data
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="addRentunerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 24px; padding: 32px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #0b3b5f; font-size: 1.5rem;"><i class="fas fa-handshake"></i> Buat Order Rentuner</h2>
+                <button onclick="closeAddRentunerModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">&times;</button>
+            </div>
+            
+            <form id="addRentunerForm">
+                <div style="margin-bottom: 12px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">Nama Perusahaan Rekan *</label>
+                    <input type="text" id="rnPartner" placeholder="Contoh: PT. ABC Sejahtera" required style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">Nama Pemesan (PIC) *</label>
+                    <input type="text" id="rnFullname" placeholder="Nama lengkap" required style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">No. WhatsApp *</label>
+                    <input type="text" id="rnPhone" placeholder="0812xxxxxx" required style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">Pilih Kendaraan *</label>
+                    <select id="rnVehicle" required style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                        <option value="">-- Pilih Kendaraan --</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <div style="flex: 1;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">Tanggal Mulai *</label>
+                        <input type="date" id="rnStartDate" required style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 6px;">Durasi (Hari) *</label>
+                        <input type="number" id="rnRentalDays" min="1" value="1" required style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 6px;">Harga Manual / Kesepakatan (Rp) *</label>
+                    <input type="text" id="rnManualPrice" placeholder="Contoh: 1.000.000" required style="width: 100%; padding: 12px; border: 1.5px solid #e0eef4; border-radius: 12px;">
+                </div>
+                
+                <button type="submit" style="width: 100%; padding: 14px; background: #10b981; color: white; border: none; border-radius: 40px; font-weight: 700; font-size: 1rem; cursor: pointer;">
+                    <i class="fas fa-save"></i> Simpan Order Rentuner
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="adminToast" class="modal-toast"></div>
+
+    <script src="assets/js/admin.js"></script>
+</body>
+</html>

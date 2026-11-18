@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - Lians Travel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #d9eef5 0%, #c1e2f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 48px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo h1 { font-size: 2rem; font-weight: 800; color: #0b3b5f; }
+        .logo span { color: #2c7da0; }
+        .logo p { color: #5a6e7a; font-size: 0.9rem; margin-top: 4px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e0eef4;
+            border-radius: 16px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44, 125, 160, 0.1);
+        }
+        .btn-register {
+            width: 100%;
+            padding: 14px;
+            background: #1f6e8c;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-register:hover { background: #0b5e7e; transform: translateY(-2px); }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #5a6e7a;
+            font-size: 0.9rem;
+        }
+        .login-link a { color: #1f6e8c; font-weight: 600; text-decoration: none; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .alert-error { background: #fee2e2; color: #b91c1c; }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert.show { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <div class="logo">
+            <h1>DAFTAR <span>AKUN</span></h1>
+            <p>Lians Travel - Rental Transportasi Manado</p>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Nama Lengkap *</label>
+                <input type="text" id="fullname" placeholder="Masukkan nama lengkap" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user-circle"></i> Username *</label>
+                <input type="text" id="username" placeholder="Masukkan username" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="email" placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-phone"></i> No. WhatsApp</label>
+                <input type="tel" id="phone" placeholder="0812xxxxxx">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password *</label>
+                <input type="password" id="password" placeholder="Minimal 6 karakter" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Konfirmasi Password *</label>
+                <input type="password" id="confirmPassword" placeholder="Ulangi password" required>
+            </div>
+            <button type="submit" class="btn-register"><i class="fas fa-user-plus"></i> Daftar</button>
+        </form>
+
+        <div class="login-link">Sudah punya akun? <a href="/login">Login di sini</a></div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type} show`;
+            setTimeout(() => { alertBox.className = 'alert'; }, 5000);
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fullname = document.getElementById('fullname').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!fullname || !username || !password) return showAlert('Nama lengkap, username, dan password wajib diisi', 'error');
+            if (password.length < 6) return showAlert('Password minimal 6 karakter', 'error');
+            if (password !== confirmPassword) return showAlert('Konfirmasi password tidak cocok', 'error');
+
+            try {
+                const response = await fetch(`${API_URL}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullname, username, email, phone, password })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Registrasi berhasil! Silakan login.', 'success');
+                    setTimeout(() => { window.location.href = '/login'; }, 2000);
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Terjadi kesalahan. Coba lagi.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
